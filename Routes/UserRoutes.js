@@ -7,6 +7,7 @@ const {
   getUserData,
   updateUserData,
   deleteUserData,
+  handleFileUpload,
 } = require("../controllers/Usercontroller");
 
 // Mandatory setup
@@ -20,7 +21,7 @@ router.get("/getuser/:id", getUserData);
 
 // Update user data(Put request)
 // http://localhost:8080/api/user/updateuser/:id
-router.put("/updateuser/:id", updateUserData);
+router.put("/updateuser/:id", handleFileUpload, updateUserData);
 
 // Delete user data
 // http://localhost:8080/api/user/deleteuser/:id

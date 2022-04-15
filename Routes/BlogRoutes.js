@@ -9,6 +9,7 @@ const {
   deleteSingleBlogData,
   editSingleBlogData,
   addNewBlogData,
+  handleFileUpload,
 } = require("../controllers/Blogcontroller");
 
 // Mandatory setup
@@ -16,13 +17,13 @@ const router = express.Router();
 
 // Routes
 
+// Add new blog(Post request)
+// http://localhost:8080/api/blog/new
+router.post("/new", handleFileUpload, addNewBlogData);
+
 // Get all blog(Get request) (Default route for '/api/blog')
 // http://localhost:8080/api/blog
 router.get("/", getAllBlogData);
-
-// Add new blog(Post request)
-// http://localhost:8080/api/blog/new
-router.post("/new", addNewBlogData);
 
 // Get single blog(Get request)
 // http://localhost:8080/api/blog/:id
@@ -32,9 +33,9 @@ router.get("/:id", getSingleBlogData);
 // http://localhost:8080/api/blog/delete/:id
 router.delete("/delete/:id", deleteSingleBlogData);
 
-// Edit single blog(Edit request)
+// Edit single blog(Put request)
 // http://localhost:8080/api/blog/edit/:id
-router.put("/edit/:id", editSingleBlogData);
+router.put("/edit/:id", handleFileUpload, editSingleBlogData);
 
 // Mandatory setup
 module.exports = router;

@@ -33,7 +33,7 @@ const getAllCategories = async (req, res) => {
     // get all category
     const allCategories = await Categories.find();
     // send response
-    res.status(200).json({ allCategories, message: "All categories" });
+    res.status(200).json(allCategories);
   } catch (error) {
     console.log(error);
     // unknown reason error

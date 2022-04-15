@@ -6,6 +6,7 @@ const dotenv = require("dotenv").config();
 const {
   registerNewUser,
   loginNewUser,
+  handleFileUpload,
 } = require("../controllers/Authcontroller");
 
 // Mandatory setup
@@ -15,7 +16,7 @@ const router = express.Router();
 
 // Register/Signup new user(Post request)
 // http://localhost:8080/api/auth/register
-router.post("/register", registerNewUser);
+router.post("/register", handleFileUpload, registerNewUser);
 
 // Login an existing user(Post request)
 // http://localhost:8080/api/auth/login
