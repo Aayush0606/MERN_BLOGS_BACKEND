@@ -6,12 +6,19 @@ const AuthRoutes = require("./Routes/AuthRoutes");
 const UserRoutes = require("./Routes/UserRoutes");
 const CategoriesRoutes = require("./Routes/CategoriesRoutes");
 const connectDB = require("./config/db");
+const cors = require("cors");
 
 // Mandatory setup
 const port = process.env.PORT || 5000;
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use("/images", express.static("images"));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+  })
+);
 
 // Routes callbacks
 

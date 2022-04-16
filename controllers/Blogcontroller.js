@@ -106,6 +106,7 @@ const addNewBlogData = async (req, res) => {
       blogImage: blogImage.path,
       authorName: content.authorName,
       categories: content.categories,
+      authourImageURL: content.authourImageURL,
     });
     const addedBlog = await newBlog.save();
     res.status(200).json(addedBlog);
@@ -133,8 +134,16 @@ const getAllBlogData = async (req, res) => {
     if (authorName) {
       // get all blogs by author name
       const authorBlog = await Blog.find({ authorName: authorName });
+      // user not found
+      if (!authorBlog) {
+        res.status(404).json({ message: "No such author!" });
+        return;
+      }
       // no blogs from user found
-      !authorBlog && res.status(404).json({ message: "No blogs from author" });
+      if (authorBlog.length === 0) {
+        res.status(404).json({ message: "No blogs from author!" });
+        return;
+      }
       // response
       res.status(200).json(authorBlog);
     } else if (categories) {
@@ -145,16 +154,31 @@ const getAllBlogData = async (req, res) => {
           $in: [categories],
         },
       });
-      // no blogs from categories found
-      !categoriesBlog &&
-        res.status(404).json({ message: "No blogs from categories" });
+      //  categories not  found
+      if (!categoriesBlog) {
+        res.status(404).json({ message: "No such category!" });
+        return;
+      }
+      // no blogs from categories  found
+      if (categoriesBlog.length === 0) {
+        res.status(404).json({ message: "No blogs from category!" });
+        return;
+      }
       // response
       res.status(200).json(categoriesBlog);
     } else {
       // get all blogs in DB
       const allBlogs = await Blog.find();
       // no blogs found in DB
-      !allBlogs && res.status(404).json({ message: "No blogs exist yet" });
+      if (!allBlogs) {
+        res.status(404).json({ message: "No blogs exist yet" });
+        return;
+      }
+      // no blogs found in DB
+      if (allBlogs.length === 0) {
+        res.status(404).json({ message: "No blogs exist yet" });
+        return;
+      }
       // response
       res.status(200).json(allBlogs);
     }
@@ -172,9 +196,17 @@ const getSingleBlogData = async (req, res) => {
     // find blog by id
     const blogData = await Blog.findById(req.params.id);
     // no blog with such id found
-    !blogData && res.status(404).json({ message: "No such blog exist" });
+    if (!blogData) {
+      res.status(404).json({ message: "No such blog exist" });
+      return;
+    }
     res.status(200).json(blogData);
   } catch (error) {
+    if (error.kind && error.kind === "ObjectId") {
+      // invalid id
+      res.status(404).json({ message: "No such blog exist" });
+      return;
+    }
     // unknown reason error
     res.status(500).json({ message: "Internal server error", error: error });
   }

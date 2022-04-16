@@ -5,7 +5,6 @@ const User = require("../models/UsersModel");
 const bcrypt = require("bcrypt");
 const fs = require("fs");
 const multer = require("multer");
-
 // Middlewares
 
 // Upload route
@@ -92,34 +91,57 @@ const handleFileUpload = async (req, res, next) => {
 const registerNewUser = async (req, res) => {
   // Trycatch for error handling
   try {
-    // hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+    // for checking if filetype is not tampered
+    const check = async () => {
+      const { fileTypeFromFile } = await import("file-type");
+      const checkExtension = await fileTypeFromFile(req.file.path);
+      const whiteList = ["image/jpeg", "image/png", "image/jpg"];
+      if (
+        checkExtension === undefined ||
+        !whiteList.includes(checkExtension.mime)
+      ) {
+        await fs.unlinkSync(req.file.path);
+        res.status(422).json({ message: "Invalid file type!" });
+        return false;
+      }
+      return true;
+    };
+    let test = await check();
+    if (test) {
+      // hash the password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
-    // new user object to insert in DB
-    const newUser = new User({
-      username: req.body.username,
-      email: req.body.email,
-      password: hashedPassword,
-      userImage: req.file.path,
-    });
+      // new user object to insert in DB
+      const newUser = new User({
+        username: req.body.username,
+        email: req.body.email,
+        password: hashedPassword,
+        userImage: req.file.path,
+      });
 
-    // insertion in db
-    const user = await newUser.save();
-    const { password, ...others } = user._doc;
+      // insertion in db
+      const user = await newUser.save();
+      const { password, ...others } = user._doc;
 
-    // response
-    res.status(200).json({ others, message: "Account created!" });
+      // response
+      res.status(200).json({ status: 200, message: "Account created!" });
+      return;
+    }
   } catch (error) {
     // delete file as error occured
     await fs.unlinkSync(req.file.path);
 
     // if duplicate name or email is found
     if (error.code && error.code === 11000) {
-      res.status(409).json({ message: "Same email or username exist!" });
+      res.status(409).json({
+        // which category conflicts(username/email)
+        message: `Same ${Object.keys(error.keyValue)[0]} exist!`,
+      });
       return;
     }
     // unknown reason error
+    console.log(error);
     res.status(500).json({ message: "Internal server error", error: error });
   }
 };

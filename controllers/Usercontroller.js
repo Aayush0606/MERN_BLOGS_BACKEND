@@ -136,6 +136,14 @@ const updateUserData = async (req, res) => {
       );
       //   remove password from user data
       const { password, ...others } = user._doc;
+      // update blog data
+      const updateInBlogs = await Blog.updateMany(
+        { authourImageURL: previousImageURL },
+        {
+          authorName: others.username,
+          authourImageURL: others.userImage,
+        }
+      );
       // remove old image from server
       await fs.unlinkSync(previousImageURL);
       //   send response

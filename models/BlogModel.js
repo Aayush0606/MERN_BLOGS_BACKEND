@@ -32,6 +32,11 @@ const blogSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // // Blog author id
+    authourImageURL: {
+      type: String,
+      required: true,
+    },
     // Blog tags
     categories: {
       type: Array,
