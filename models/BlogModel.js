@@ -39,7 +39,7 @@ const blogSchema = new mongoose.Schema(
     },
     // Blog tags
     categories: {
-      type: Array,
+      type: String,
       required: true,
     },
   },

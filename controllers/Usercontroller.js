@@ -98,7 +98,13 @@ const getUserData = async (req, res) => {
     !userId && res.status(404).json({ message: "No such user exist" });
 
     // get user from db
-    const user = await User.findById(userId);
+    let user;
+    try {
+      user = await User.findById(userId);
+    } catch (error) {
+      res.status(404).json({ message: "No such user exist" });
+      return;
+    }
 
     // if no user found
     !user && res.status(404).json({ message: "No such user exist" });
@@ -106,7 +112,7 @@ const getUserData = async (req, res) => {
     // remove password from user data
     const { password, ...others } = user._doc;
     // return data
-    res.status(200).json(others);
+    res.status(200).json({ others });
   } catch (error) {
     console.log(error);
     // unknown reason error
@@ -122,32 +128,50 @@ const updateUserData = async (req, res) => {
     urlId = req.params.id;
     bodyId = req.body.id;
     if (urlId === bodyId) {
-      const previousImageURL = req.body.userImage;
-      const salt = await bcrypt.genSalt(10);
-      req.body.password = await bcrypt.hash(req.body.password, salt);
-      req.body.userImage = req.file.path;
-      //   update user call from mongoose
-      const user = await User.findByIdAndUpdate(
-        urlId,
-        // method to set new data in existing one
-        { $set: req.body },
-        // return instance of new data
-        { new: true }
-      );
-      //   remove password from user data
-      const { password, ...others } = user._doc;
-      // update blog data
-      const updateInBlogs = await Blog.updateMany(
-        { authourImageURL: previousImageURL },
-        {
-          authorName: others.username,
-          authourImageURL: others.userImage,
+      // for checking if filetype is not tampered
+      const check = async () => {
+        const { fileTypeFromFile } = await import("file-type");
+        const checkExtension = await fileTypeFromFile(req.file.path);
+        const whiteList = ["image/jpeg", "image/png", "image/jpg"];
+        if (
+          checkExtension === undefined ||
+          !whiteList.includes(checkExtension.mime)
+        ) {
+          await fs.unlinkSync(req.file.path);
+          res.status(422).json({ message: "Invalid file type!" });
+          return false;
         }
-      );
-      // remove old image from server
-      await fs.unlinkSync(previousImageURL);
-      //   send response
-      res.status(200).json(others);
+        return true;
+      };
+      let isValid = await check();
+      if (isValid) {
+        const previousImageURL = req.body.userImage;
+        const salt = await bcrypt.genSalt(10);
+        req.body.password = await bcrypt.hash(req.body.password, salt);
+        req.body.userImage = req.file.path;
+        //   update user call from mongoose
+        const user = await User.findByIdAndUpdate(
+          urlId,
+          // method to set new data in existing one
+          { $set: req.body },
+          // return instance of new data
+          { new: true }
+        );
+        //   remove password from user data
+        const { password, ...others } = user._doc;
+        // update blog data
+        const updateInBlogs = await Blog.updateMany(
+          { authourImageURL: previousImageURL },
+          {
+            authorName: others.username,
+            authourImageURL: others.userImage,
+          }
+        );
+        // remove old image from server
+        await fs.unlinkSync(previousImageURL);
+        //   send response
+        res.status(200).json({ others });
+      }
     } else {
       await fs.unlinkSync(req.file.path);
       res.status(401).json({ message: "Access denied" });

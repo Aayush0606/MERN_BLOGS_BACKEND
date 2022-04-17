@@ -106,8 +106,8 @@ const registerNewUser = async (req, res) => {
       }
       return true;
     };
-    let test = await check();
-    if (test) {
+    let isValid = await check();
+    if (isValid) {
       // hash the password
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(req.body.password, salt);

@@ -74,7 +74,7 @@ const handleFileUpload = async (req, res, next) => {
         res.status(422).json({ message: "Invalid file type!" });
         return;
       } else if (error.message === "NOT_ENOUGH_DATA") {
-        res.status(422).json({ message: "Not enough data!" });
+        res.status(422).json({ message: "Not enough data!", data: req.body });
         return;
       }
       res.json(400).json({ message: "Something went wrong, try again!" });
@@ -97,19 +97,37 @@ const handleFileUpload = async (req, res, next) => {
 // http://localhost:8080/api/blog/new
 const addNewBlogData = async (req, res) => {
   try {
-    const content = req.body;
-    const blogImage = req.file;
-    const newBlog = new Blog({
-      title: content.title,
-      description: content.description,
-      content: content.content,
-      blogImage: blogImage.path,
-      authorName: content.authorName,
-      categories: content.categories,
-      authourImageURL: content.authourImageURL,
-    });
-    const addedBlog = await newBlog.save();
-    res.status(200).json(addedBlog);
+    // for checking if filetype is not tampered
+    const check = async () => {
+      const { fileTypeFromFile } = await import("file-type");
+      const checkExtension = await fileTypeFromFile(req.file.path);
+      const whiteList = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
+      if (
+        checkExtension === undefined ||
+        !whiteList.includes(checkExtension.mime)
+      ) {
+        await fs.unlinkSync(req.file.path);
+        res.status(422).json({ message: "Invalid file type!" });
+        return false;
+      }
+      return true;
+    };
+    let isValid = await check();
+    if (isValid) {
+      const content = req.body;
+      const blogImage = req.file;
+      const newBlog = new Blog({
+        title: content.title,
+        description: content.description,
+        content: content.content,
+        blogImage: blogImage.path,
+        authorName: content.authorName,
+        categories: content.categories,
+        authourImageURL: content.authourImageURL,
+      });
+      const addedBlog = await newBlog.save();
+      res.status(200).json({ addedBlog });
+    }
   } catch (error) {
     // delete image as error occured
     await fs.unlinkSync(req.file.path);
@@ -151,7 +169,7 @@ const getAllBlogData = async (req, res) => {
       const categoriesBlog = await Blog.find({
         categories: {
           // check for query categories in categories array
-          $in: [categories],
+          $regex: categories,
         },
       });
       //  categories not  found
