@@ -254,6 +254,7 @@ const deleteSingleBlogData = async (req, res) => {
     if (blog.authorName === req.body.authorName) {
       await fs.unlinkSync(req.body.blogImage);
       const deleteBlog = await Blog.findByIdAndDelete(blogId);
+      res.status(200).json({ success: true });
     } else {
       res.status(401).json({ message: "Access denied" });
     }
@@ -308,7 +309,7 @@ const editSingleBlogData = async (req, res) => {
       );
       // delete old file from system after updating
       await fs.unlinkSync(prviousImageURL);
-      res.status(200).json(updatedData);
+      res.status(200).json({ addedBlog: updatedData });
     }
     // details don't match
     else {
