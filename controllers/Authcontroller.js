@@ -78,10 +78,10 @@ const handleFileUpload = async (req, res, next) => {
     else if (!req.file) {
       res.status(400).json({ message: "File is required!" });
       return;
+    } else {
+      // calling next midlleware
+      next();
     }
-
-    // calling next midlleware
-    next();
   });
 };
 
@@ -131,6 +131,7 @@ const registerNewUser = async (req, res) => {
     } else {
       return;
     }
+    console.log(req.res);
   } catch (error) {
     // delete file as error occured
     await fs.unlinkSync(req.file.path);
