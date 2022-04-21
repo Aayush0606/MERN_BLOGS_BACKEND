@@ -14,14 +14,17 @@ const addNewCategories = async (req, res) => {
     const data = await saveCategory.save();
     // send response
     res.status(200).json({ data, message: "Category created" });
+    return;
   } catch (error) {
     console.log(error);
     // if duplicate category is found
     if (error.code && error.code === 11000) {
       res.status(200).json({ message: "Category created" });
+      return;
+    } else {
+      // unknown reason error
+      res.status(500).json({ message: "Internal server error", error: error });
     }
-    // unknown reason error
-    res.status(500).json({ message: "Internal server error", error: error });
   }
 };
 
@@ -34,10 +37,12 @@ const getAllCategories = async (req, res) => {
     const allCategories = await Categories.find();
     // send response
     res.status(200).json(allCategories);
+    return;
   } catch (error) {
     console.log(error);
     // unknown reason error
     res.status(500).json({ message: "Internal server error", error: error });
+    return;
   }
 };
 

@@ -127,6 +127,9 @@ const addNewBlogData = async (req, res) => {
       });
       const addedBlog = await newBlog.save();
       res.status(200).json({ addedBlog });
+      return;
+    } else {
+      return;
     }
   } catch (error) {
     // delete image as error occured
@@ -134,9 +137,12 @@ const addNewBlogData = async (req, res) => {
     // if duplicate title is found
     if (error.code && error.code === 11000) {
       res.status(409).json({ message: "Title already exist" });
+      return;
+    } else {
+      // unknown reason error
+      res.status(500).json({ message: "Internal server error", error: error });
+      return;
     }
-    // unknown reason error
-    res.status(500).json({ message: "Internal server error", error: error });
   }
 };
 
@@ -164,6 +170,7 @@ const getAllBlogData = async (req, res) => {
       }
       // response
       res.status(200).json(authorBlog);
+      return;
     } else if (categories) {
       // get blogs from specific categories
       const categoriesBlog = await Blog.find({
@@ -184,6 +191,7 @@ const getAllBlogData = async (req, res) => {
       }
       // response
       res.status(200).json(categoriesBlog);
+      return;
     } else {
       // get all blogs in DB
       const allBlogs = await Blog.find();
@@ -199,11 +207,13 @@ const getAllBlogData = async (req, res) => {
       }
       // response
       res.status(200).json(allBlogs);
+      return;
     }
   } catch (error) {
     console.log(error);
     // unknown reason error
     res.status(500).json({ message: "Internal server error", error: error });
+    return;
   }
 };
 
@@ -219,6 +229,7 @@ const getSingleBlogData = async (req, res) => {
       return;
     }
     res.status(200).json(blogData);
+    return;
   } catch (error) {
     if (error.kind && error.kind === "ObjectId") {
       // invalid id
@@ -227,6 +238,7 @@ const getSingleBlogData = async (req, res) => {
     }
     // unknown reason error
     res.status(500).json({ message: "Internal server error", error: error });
+    return;
   }
 };
 
@@ -249,23 +261,28 @@ const deleteSingleBlogData = async (req, res) => {
       return;
     }
     // if no blog with given id found
-    !blog && res.status(404).json({ message: "No such blog exist" });
+    if (!blog) {
+      res.status(404).json({ message: "No such blog exist" });
+    }
     // check for same user
     if (blog.authorName === req.body.authorName) {
       await fs.unlinkSync(req.body.blogImage);
       const deleteBlog = await Blog.findByIdAndDelete(blogId);
       res.status(200).json({ success: true });
+      return;
     } else {
       res.status(401).json({ message: "Access denied" });
+      return;
     }
 
-    // response success
-    res.status(200).json({ message: "Deleted successfully" });
+    // // response success
+    // res.status(200).json({ message: "Deleted successfully" });
 
     // if both details match
   } catch (error) {
     // unknown reason error
     res.status(500).json({ message: "Internal server error", error: error });
+    return;
   }
 };
 
@@ -292,6 +309,7 @@ const editSingleBlogData = async (req, res) => {
       // delete recently saved as no data is found
       await fs.unlinkSync(blogImage.path);
       res.status(404).json({ message: "No such blog exist" });
+      return;
     }
 
     // if both details match
@@ -310,10 +328,12 @@ const editSingleBlogData = async (req, res) => {
       // delete old file from system after updating
       await fs.unlinkSync(prviousImageURL);
       res.status(200).json({ addedBlog: updatedData });
+      return;
     }
     // details don't match
     else {
       res.status(401).json({ message: "Access denied" });
+      return;
     }
   } catch (error) {
     console.log(error);
@@ -327,6 +347,7 @@ const editSingleBlogData = async (req, res) => {
 
     // unknown reason error
     res.status(500).json({ message: "Internal server error", error: error });
+    return;
   }
 };
 

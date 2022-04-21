@@ -127,6 +127,8 @@ const registerNewUser = async (req, res) => {
       // response
       res.status(200).json({ status: 200, message: "Account created!" });
       return;
+    } else {
+      return;
     }
   } catch (error) {
     // delete file as error occured
@@ -156,29 +158,44 @@ const loginNewUser = async (req, res) => {
     if (!content.email || !content.password) {
       // return in case of empty data
       res.status(400).json({ message: "Please fill all the data fields" });
+      return;
     }
 
     // fetch requested user data
-    const user = await User.findOne({ email: req.body.email });
+    let user;
+    try {
+      user = await User.findOne({ email: req.body.email });
+    } catch (err) {
+      res.status(400).json({ message: "Invalid Credentials" });
+      return;
+    }
 
     // if no user found
-    !user && res.status(400).json({ message: "Invalid Credentials" });
+    if (!user) {
+      res.status(400).json({ message: "Invalid Credentials" });
+      return;
+    }
 
     // check password hash by encrypting the given password
     const checkPassword = await bcrypt.compare(content.password, user.password);
 
     // password not matched
-    !checkPassword && res.status(400).json({ message: "Invalid Credentials" });
+    if (!checkPassword) {
+      res.status(400).json({ message: "Invalid Credentials" });
+      return;
+    }
 
     // break password and rest of the fiels into different category
     const { password, ...others } = user._doc;
 
     // send user details back
     res.status(200).json({ others, message: "Login successful!" });
+    return;
   } catch (error) {
     console.log(error);
     // unknown reason error
     res.status(500).json({ message: "Internal server error", error: error });
+    return;
   }
 };
 

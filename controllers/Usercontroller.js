@@ -95,7 +95,10 @@ const getUserData = async (req, res) => {
   try {
     const userId = req.params.id;
     // return in case of no id
-    !userId && res.status(404).json({ message: "No such user exist" });
+    if (!userId) {
+      res.status(404).json({ message: "No such user exist" });
+      return;
+    }
 
     // get user from db
     let user;
@@ -107,16 +110,21 @@ const getUserData = async (req, res) => {
     }
 
     // if no user found
-    !user && res.status(404).json({ message: "No such user exist" });
+    if (!user) {
+      res.status(404).json({ message: "No such user exist" });
+      return;
+    }
 
     // remove password from user data
     const { password, ...others } = user._doc;
     // return data
     res.status(200).json({ others });
+    return;
   } catch (error) {
     console.log(error);
     // unknown reason error
     res.status(500).json({ message: "Internal server error", error: error });
+    return;
   }
 };
 
@@ -171,10 +179,12 @@ const updateUserData = async (req, res) => {
         await fs.unlinkSync(previousImageURL);
         //   send response
         res.status(200).json({ others });
+        return;
       }
     } else {
       await fs.unlinkSync(req.file.path);
       res.status(401).json({ message: "Access denied" });
+      return;
     }
   } catch (error) {
     await fs.unlinkSync(req.file.path);
@@ -184,12 +194,14 @@ const updateUserData = async (req, res) => {
       return;
     }
     // if invalid id is found
-    if (error.path && error.path === "_id") {
+    else if (error.path && error.path === "_id") {
       res.status(404).json({ message: "No such user exist" });
       return;
+    } else {
+      // unknown reason error
+      res.status(500).json({ message: "Internal server error", error: error });
+      return;
     }
-    // unknown reason error
-    res.status(500).json({ message: "Internal server error", error: error });
   }
 };
 
@@ -209,10 +221,14 @@ const deleteUserData = async (req, res) => {
       } catch (error) {
         // invalid id
         res.status(404).json({ message: "No such user exist" });
+        return;
       }
 
       //   if user don't exist
-      !user && res.status(404).json({ message: "No such user exist" });
+      if (!user) {
+        res.status(404).json({ message: "No such user exist" });
+        return;
+      }
       //   delete all posts by user
       await Blog.deleteMany({ username: user.username });
       //   delete user itself
@@ -221,13 +237,16 @@ const deleteUserData = async (req, res) => {
       await fs.unlinkSync(req.body.userImage);
       //   send response
       res.status(200).json({ message: "Account deleted" });
+      return;
     } else {
       // id in url and body don't match
       res.status(401).json({ message: "Access denied" });
+      return;
     }
   } catch (error) {
     // unknown reason error
     res.status(500).json({ message: "Internal server error", error: error });
+    return;
   }
 };
 
