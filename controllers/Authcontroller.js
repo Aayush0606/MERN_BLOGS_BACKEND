@@ -69,9 +69,10 @@ const handleFileUpload = async (req, res, next) => {
       } else if (error.message === "NOT_ENOUGH_DATA") {
         res.status(422).json({ message: "Not enough data!" });
         return;
+      } else {
+        res.json(400).json({ message: "Something went wrong, try again!" });
+        return;
       }
-      res.json(400).json({ message: "Something went wrong, try again!" });
-      return;
     }
     // NO_FILE_FOUND_ERROR
     else if (!req.file) {
